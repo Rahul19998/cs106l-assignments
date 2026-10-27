@@ -25,10 +25,12 @@ const std::string COURSES_NOT_OFFERED_PATH = "student_output/courses_not_offered
  * Hint: Remember what types C++ streams work with?!
  */
 struct Course {
-  /* STUDENT TODO */ title;
-  /* STUDENT TODO */ number_of_units;
-  /* STUDENT TODO */ quarter;
+  std::string title;
+  u_int32_t number_of_units;
+  std::string quarter;
 };
+
+std::string firstLine = "Title,Number of Units,Quarter\n";
 
 /**
  * (STUDENT TODO) Look at how the main function (at the bottom of this file)
@@ -58,8 +60,32 @@ struct Course {
  * @param filename The name of the file to parse.
  * @param courses  A vector of courses to populate.
  */
-void parse_csv(std::string filename, std::vector<Course> courses) {
+void parse_csv(std::string filename, std::vector<Course>& courses) {
   /* (STUDENT TODO) Your code goes here... */
+  //We will open the file and then split the string using ',' delimiter.
+  std::ifstream fileHandle(filename);
+  std::string line;
+  if( fileHandle.is_open() ) {
+    while( std::getline(fileHandle, line) ) {
+      if( line.compare(0,5,"Title") == 0 ) {
+        //skip
+        std::cout << "Skipping first line." << std::endl;
+        continue;
+      }
+      std::vector<std::string> splitString = split(line,',');
+      Course tempCourse;
+      tempCourse.title = splitString[0];
+      tempCourse.number_of_units = std::stoi(splitString[1]);
+      tempCourse.quarter = splitString[2];
+      //push in courses.
+      courses.push_back(tempCourse);
+    }
+  }
+  else {
+    std::cerr << "Unable to open file. " << filename << std::endl;
+    return; //early return.
+  }
+  fileHandle.close();
 }
 
 /**
@@ -80,8 +106,32 @@ void parse_csv(std::string filename, std::vector<Course> courses) {
  * @param all_courses A vector of all courses gotten by calling `parse_csv`.
  *                    This vector will be modified by removing all offered courses.
  */
-void write_courses_offered(std::vector<Course> all_courses) {
+void write_courses_offered(std::vector<Course>& all_courses) {
   /* (STUDENT TODO) Your code goes here... */
+  std::vector<Course> tobeDeletedList;
+  std::ofstream  fileHandle("student_output/courses_offered.csv");
+  if(fileHandle.is_open()) {
+    fileHandle << firstLine;
+    for(Course c : all_courses) {
+      if(c.quarter == "null") {
+        //skip;
+        continue;
+      }
+      else {
+        fileHandle << c.title << "," << c.number_of_units << "," << c.quarter << "\n";
+        tobeDeletedList.push_back(c);
+      }
+    }
+  }
+  else
+  {
+    std::cerr << "Unable to open the files." << std::endl;
+    return;
+  }
+  fileHandle.close();
+  for(Course c: tobeDeletedList) {
+    delete_elem_from_vector(all_courses,c);
+  }
 }
 
 /**
@@ -99,6 +149,19 @@ void write_courses_offered(std::vector<Course> all_courses) {
  */
 void write_courses_not_offered(std::vector<Course> unlisted_courses) {
   /* (STUDENT TODO) Your code goes here... */
+  std::ofstream  fileHandle("student_output/courses_not_offered.csv");
+  if(fileHandle.is_open()) {
+    fileHandle << firstLine;
+    for(Course c : unlisted_courses) {
+        fileHandle << c.title << "," << c.number_of_units << "," << c.quarter << "\n";
+    }
+  }
+  else
+  {
+    std::cerr << "Unable to open the files." << std::endl;
+    return;
+  }
+  fileHandle.close();
 }
 
 int main() {
